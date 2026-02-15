@@ -10,7 +10,7 @@ import playlistRoutes from "./routes/playlist.routes.js";
 import potdRoutes from "./routes/potd.routes.js";
 import feedbackRoutes from "./routes/feedback.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
-import cors from "cors";
+// import cors from "cors";
 dotenv.config();
 
 const app = express();
