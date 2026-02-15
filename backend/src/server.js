@@ -10,11 +10,22 @@ import playlistRoutes from "./routes/playlist.routes.js";
 import potdRoutes from "./routes/potd.routes.js";
 import feedbackRoutes from "./routes/feedback.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
-
+import cors from "cors";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://codewithmic.onrender.com",
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 // 🔥 CONNECT DB
