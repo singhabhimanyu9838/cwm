@@ -1,28 +1,25 @@
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  "https://cwm-backend.onrender.com/api";
 
+console.log("API BASE:", API_BASE);
 
-const API_URL="https://cwm-backend.onrender.com" ;
-
-export const api = async (url: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${API_URL}${url}`, {
-    method: options.method || "GET",
+export async function api(
+  endpoint: string,
+  options: RequestInit = {}
+) {
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
-    body: options.body,
+    ...options,
   });
 
   if (!res.ok) {
-    let message = "API Error";
-    try {
-      const err = await res.json();
-      message = err.message || message;
-    } catch {}
-    throw new Error(message);
+    throw new Error("API Error");
   }
 
   return res.json();
-};
+}
