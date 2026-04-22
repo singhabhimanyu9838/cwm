@@ -1,79 +1,54 @@
-import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, Library } from "lucide-react";
 import PlaylistCard from "@/components/PlaylistCard";
 import { api } from "@/lib/api";
-
-import { getYoutubeThumbnail } from "@/utils/youtube";
-
-
-
+import SkeletonLoader from "@/components/SkeletonLoader";
+import { Button } from "@/components/ui/button";
 
 const Playlists = () => {
-  const [playlists, setPlaylists] = useState<any[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchPlaylists = async () => {
-      try {
-        const data = await api("/playlists");
-        setPlaylists(data || []);
-
-        const uniqueCats = Array.from(
-          new Set(
-            (data || [])
-              .map((pl: any) => pl.category)
-              .filter(Boolean)
-          )
-        );
-        setCategories(uniqueCats);
-      } catch (err) {
-        setPlaylists([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPlaylists();
-  }, []);
-
-  const filtered = playlists.filter((pl) => {
-    const title = pl.title?.toLowerCase() || "";
-    const matchSearch = title.includes(search.toLowerCase());
-
-    const matchCat =
-      activeCategory === "All" || pl.category === activeCategory;
-
-    return matchSearch && matchCat;
+  const { data: playlists = [], isLoading } = useQuery({
+    queryKey: ["playlists", "public-list"],
+    queryFn: () => api("/playlists"),
   });
 
-  /* ---------------- loading ---------------- */
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-24 flex items-center justify-center">
-        <p className="text-muted-foreground animate-pulse">
-          Loading playlists...
-        </p>
-      </div>
-    );
-  }
+  const categories = useMemo(() => {
+    const cats = new Set(playlists.map((pl: any) => pl.category).filter(Boolean));
+    return ["All", ...Array.from(cats)];
+  }, [playlists]);
+
+  const filtered = useMemo(() => {
+    return playlists.filter((pl: any) => {
+      const title = pl.title?.toLowerCase() || "";
+      const matchSearch = title.includes(search.toLowerCase());
+
+      const matchCat =
+        activeCategory === "All" || pl.category === activeCategory;
+
+      return matchSearch && matchCat;
+    });
+  }, [playlists, search, activeCategory]);
 
   return (
-    <div className="min-h-screen pt-24 pb-10">
+    <div className="min-h-screen pt-24 pb-10 animate-in fade-in duration-500">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-          Playlists
-        </h1>
-        <p className="text-muted-foreground mb-8">
-          Structured learning paths to master any topic.
-        </p>
+        <div className="mb-10">
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2 flex items-center gap-2">
+            <Library className="w-8 h-8 text-primary" />
+            Learning Paths
+          </h1>
+          <p className="text-muted-foreground">
+            Structured collections of videos to help you master specific domains.
+          </p>
+        </div>
 
         {/* Search & Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col sm:flex-row items-center gap-4 mb-10 bg-card border border-border p-4 rounded-xl shadow-sm">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
@@ -84,15 +59,18 @@ const Playlists = () => {
             />
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            {["All", ...categories].map((cat) => (
+          <div className="flex gap-2 flex-wrap items-center">
+             <span className="text-[10px] uppercase font-bold text-muted-foreground mr-1 hidden lg:block">
+              Course Type:
+            </span>
+            {categories.map((cat: any) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-display font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-xs font-display font-medium transition-all ${
                   activeCategory === cat
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105"
+                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent hover:border-border"
                 }`}
               >
                 {cat}
@@ -102,16 +80,29 @@ const Playlists = () => {
         </div>
 
         {/* Playlist Grid */}
-        {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((pl) => (
+        {isLoading ? (
+          <SkeletonLoader type="playlist" />
+        ) : filtered.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filtered.map((pl: any) => (
               <PlaylistCard key={pl._id} playlist={pl} />
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground mt-12">
-            No playlists found.
-          </p>
+          <div className="text-center py-32 bg-secondary/10 rounded-2xl border border-dashed border-border mt-10">
+            <div className="w-16 h-16 bg-secondary/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Library className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground text-lg mb-2 font-display font-semibold">No playlists found</p>
+            <p className="text-sm text-muted-foreground/60">Try searching for a different topic or clearing filters</p>
+            <Button 
+              variant="outline" 
+              onClick={() => {setSearch(""); setActiveCategory("All");}}
+              className="mt-6 rounded-xl"
+            >
+              Reset All Filters
+            </Button>
+          </div>
         )}
       </div>
     </div>
@@ -119,3 +110,4 @@ const Playlists = () => {
 };
 
 export default Playlists;
+

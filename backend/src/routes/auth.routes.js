@@ -8,9 +8,11 @@ const router = express.Router();
 /* SIGN UP */
 /* SIGN UP */
 router.post("/register", async (req, res) => {
+  console.log("📝 Incoming Registration:", req.body.email);
   const { name, email, password } = req.body;
 
   const exists = await User.findOne({ email });
+
   if (exists) {
     return res.status(400).json({ message: "Email already exists" });
   }
@@ -43,9 +45,11 @@ router.post("/register", async (req, res) => {
 
 
 router.post("/login", async (req, res) => {
+  console.log("🔑 Incoming Login Attempt:", req.body.email);
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
+
   if (!user) {
     return res.status(400).json({ message: "Invalid credentials" });
   }
