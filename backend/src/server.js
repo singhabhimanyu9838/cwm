@@ -11,6 +11,10 @@ import playlistRoutes from "./routes/playlist.routes.js";
 import potdRoutes from "./routes/potd.routes.js";
 import feedbackRoutes from "./routes/feedback.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import youtubeRoutes from "./routes/youtube.routes.js";
+import uploadRoutes from "./routes/upload.routes.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
@@ -46,6 +50,10 @@ app.options("*", cors());
 
 app.use(express.json());
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 /* ===================== DB ===================== */
 await connectDB();
 await seedAdmin();
@@ -57,6 +65,8 @@ app.use("/api/playlists", playlistRoutes);
 app.use("/api/potd", potdRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/youtube", youtubeRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.get("/", (req, res) => {
   res.send("API running");

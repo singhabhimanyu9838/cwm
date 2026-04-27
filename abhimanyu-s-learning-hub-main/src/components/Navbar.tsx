@@ -27,7 +27,7 @@ const Navbar = () => {
               <Code2 className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-lg text-foreground">
-              codestorywithMIC<span className="text-primary">.dev</span>
+              codewithMIC<span className="text-primary">.dev</span>
             </span>
           </Link>
 

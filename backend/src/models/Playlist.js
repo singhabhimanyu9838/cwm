@@ -5,6 +5,8 @@ const playlistSchema = new mongoose.Schema(
     title: String,
     description: String,
     category: String,
+    thumbnail: String,
+    date: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

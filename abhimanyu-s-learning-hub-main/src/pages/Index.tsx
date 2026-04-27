@@ -54,7 +54,7 @@ const Index = () => {
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-6xl font-display font-bold text-white leading-tight">
               Master Tech with{" "}
-              <span className="text-gradient">codestorywithMIC</span>
+              <span className="text-gradient">codewithMIC</span>
             </h1>
 
             <p className="text-lg text-white/70 mt-4 max-w-xl">
@@ -208,7 +208,7 @@ const Index = () => {
           {/* ===== Desktop Banner ===== */}
           <img
             src="/codewithMIC3.png"
-            alt="codestorywithMIC YouTube Banner"
+            alt="codewithMIC YouTube Banner"
             className="hidden md:block w-full h-[260px] object-cover"
             loading="lazy"
           />
@@ -216,7 +216,7 @@ const Index = () => {
           {/* ===== Mobile Banner ===== */}
           <img
             src="/codewithMIC.png"
-            alt="codestorywithMIC YouTube Banner"
+            alt="codewithMIC YouTube Banner"
             className="block md:hidden w-full h-[320px] object-cover"
             loading="lazy"
           />
@@ -225,7 +225,7 @@ const Index = () => {
           <div className="absolute inset-0 bg-black/45 flex items-center">
             <div className="px-6 md:px-10 max-w-xl">
               <h3 className="text-xl md:text-2xl font-display font-bold text-white">
-                codestorywithMIC
+                codewithMIC
               </h3>
 
               <p className="text-sm md:text-base text-white/80 mt-1">
@@ -235,7 +235,7 @@ const Index = () => {
               <div className="flex flex-wrap gap-3 mt-4">
                 <Button asChild size="sm">
                   <a
-                    href="https://www.youtube.com/@codestorywithMIC"
+                    href="https://www.youtube.com/@codewithMIC"
                     target="_blank"
                     rel="noopener noreferrer"
                   >

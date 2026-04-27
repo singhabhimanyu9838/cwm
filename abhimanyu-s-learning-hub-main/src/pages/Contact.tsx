@@ -35,8 +35,8 @@ const Contact = () => {
       });
 
       toast({
-        title: "Message sent!",
-        description: "Thanks for your feedback.",
+        title: "Message Sent Successfully! ✅",
+        description: "Thank you for reaching out. We have received your message and will get back to you shortly.",
       });
 
       setForm({ name: "", email: "", message: "" });

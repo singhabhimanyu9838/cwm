@@ -18,7 +18,7 @@ const Footer = () => (
               <Code2 className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-lg text-foreground">
-              codestorywithMIC<span className="text-primary">.dev</span>
+              codewithMIC<span className="text-primary">.dev</span>
             </span>
           </Link>
           <p className="text-muted-foreground text-sm max-w-sm">
@@ -29,7 +29,7 @@ const Footer = () => (
             {[
               {
                 Icon: Youtube,
-                href: "https://www.youtube.com/@codestorywithMIC",
+                href: "https://www.youtube.com/@codewithMIC",
                 label: "YouTube",
                 color: `
     hover:text-white

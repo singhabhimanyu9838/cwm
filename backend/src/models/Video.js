@@ -7,14 +7,16 @@ const videoSchema = new mongoose.Schema(
     description: String,
     category: String,
 
-    playlist: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Playlist",
-      default: null,
-    },
+    playlists: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Playlist",
+      },
+    ],
 
     notesUrl: String,
     codeUrl: String,
+    date: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

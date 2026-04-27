@@ -11,20 +11,23 @@ router.get("/", async (req, res) => {
   const limit = Number(req.query.limit) || 0;
 
   const playlists = await Playlist.find()
-    .sort({ createdAt: -1 })
+    .sort({ date: -1, createdAt: -1 })
     .limit(limit);
 
   const result = await Promise.all(
     playlists.map(async (pl) => {
-      const count = await Video.countDocuments({ playlist: pl._id });
-      const firstVideo = await Video.findOne({ playlist: pl._id });
+      const videoFilter = {
+        $or: [{ playlists: pl._id }, { playlist: pl._id }],
+      };
+      const count = await Video.countDocuments(videoFilter);
+      const firstVideo = await Video.findOne(videoFilter).sort({ date: -1, createdAt: -1 });
 
       return {
         ...pl.toObject(),
         videoCount: count,
-        thumbnail: firstVideo
-          ? `https://img.youtube.com/vi/${firstVideo.youtubeId}/hqdefault.jpg`
-          : null,
+        thumbnail: pl.thumbnail || (firstVideo
+          ? `https://img.youtube.com/vi/${firstVideo.youtubeId}/mqdefault.jpg`
+          : null),
       };
     })
   );
@@ -38,7 +41,9 @@ router.get("/:id", async (req, res) => {
   const playlist = await Playlist.findById(req.params.id);
   if (!playlist) return res.status(404).json({ message: "Not found" });
 
-  const videos = await Video.find({ playlist: playlist._id });
+  const videos = await Video.find({
+    $or: [{ playlists: playlist._id }, { playlist: playlist._id }],
+  }).sort({ date: -1, createdAt: -1 });
 
   res.json({
     ...playlist.toObject(),
@@ -61,6 +66,7 @@ router.put("/:id", protect, adminOnly, async (req, res) => {
 
 router.delete("/:id", protect, adminOnly, async (req, res) => {
   await Playlist.findByIdAndDelete(req.params.id);
+  await Video.updateMany({ playlists: req.params.id }, { $pull: { playlists: req.params.id } });
   await Video.updateMany({ playlist: req.params.id }, { playlist: null });
   res.json({ message: "Deleted" });
 });

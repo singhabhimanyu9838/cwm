@@ -12,13 +12,16 @@ router.get("/", async (req, res) => {
   const filter = {};
 
   if (req.query.playlist) {
-    filter.playlist = req.query.playlist;
+    filter.$or = [
+      { playlists: req.query.playlist },
+      { playlist: req.query.playlist }
+    ];
   }
-
+  
   const limit = Number(req.query.limit) || 0;
 
   const videos = await Video.find(filter)
-    .sort({ createdAt: -1 })
+    .sort({ date: -1, createdAt: -1 })
     .limit(limit);
 
   res.json(videos);

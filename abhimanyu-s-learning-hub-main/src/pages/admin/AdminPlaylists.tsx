@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ListVideo, Plus } from "lucide-react";
+import { Pencil, Trash2, ListVideo, Plus, Upload, Loader2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 const emptyPlaylist = {
   title: "",
   description: "",
   category: "",
+  thumbnail: "",
+  date: new Date().toISOString().split('T')[0],
 };
 
 const inputClass =
@@ -18,6 +20,39 @@ const AdminPlaylists = () => {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<any>(emptyPlaylist);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    setUploading(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+      const token = localStorage.getItem("token");
+      
+      const res = await fetch(`${API_BASE}/upload`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+      
+      const data = await res.json();
+      setForm({ ...form, thumbnail: data.url });
+      toast.success("Image uploaded!");
+    } catch (err) {
+      toast.error("Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   /* ---------------- fetch ---------------- */
   const { data: playlists = [], isLoading: playlistsLoading } = useQuery({
@@ -72,6 +107,8 @@ const AdminPlaylists = () => {
       title: pl.title,
       description: pl.description || "",
       category: pl.category || "",
+      thumbnail: pl.thumbnail || "",
+      date: pl.date ? new Date(pl.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     });
     setEditingId(pl._id);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -119,16 +156,78 @@ const AdminPlaylists = () => {
           />
         </div>
 
-        <div className="space-y-1">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
+              Category
+            </label>
+            <input
+              placeholder="DSA / Web / AI"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              className={inputClass}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
+              Playlist Date
+            </label>
+            <input
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
-            Category
+            Playlist Thumbnail
           </label>
-          <input
-            placeholder="DSA / Web / AI"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-            className={inputClass}
-          />
+          
+          <div className="flex flex-col gap-3">
+            {/* Preview & Link Input */}
+            <div className="flex gap-4 items-start">
+              <div className="w-24 aspect-video bg-secondary rounded-lg border border-border overflow-hidden flex items-center justify-center shrink-0">
+                {form.thumbnail ? (
+                  <img src={form.thumbnail} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <ImageIcon className="w-6 h-6 text-muted-foreground/30" />
+                )}
+              </div>
+              <div className="flex-1 space-y-1">
+                <input
+                  placeholder="Paste image URL here..."
+                  value={form.thumbnail}
+                  onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
+                  className={inputClass}
+                />
+                <p className="text-[9px] text-muted-foreground">
+                  Paste a URL or upload an image below
+                </p>
+              </div>
+            </div>
+
+            {/* Upload Button */}
+            <label className="relative flex items-center justify-center gap-2 w-full h-10 border-2 border-dashed border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
+              <input
+                type="file"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                accept="image/*"
+                onChange={handleFileUpload}
+                disabled={uploading}
+              />
+              {uploading ? (
+                <Loader2 className="w-4 h-4 text-primary animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              )}
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">
+                {uploading ? "Uploading..." : "Upload from Computer"}
+              </span>
+            </label>
+          </div>
         </div>
 
         <div className="flex gap-3">

@@ -2,17 +2,20 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Play, Pencil, Trash2, Plus } from "lucide-react";
+import { Play, Pencil, Trash2, Plus, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+const CATEGORIES = ["DSA", "Web Development", "AI & GenAI", "Interview Prep", "Programming Languages", "DevOps", "System Design", "Projects"];
 
 const emptyVideo = {
   title: "",
   youtubeId: "",
   description: "",
-  category: "",
+  category: "DSA",
   notesUrl: "",
   codeUrl: "",
-  playlist: null,
+  playlists: [],
+  date: new Date().toISOString().split('T')[0],
 };
 
 const inputClass =
@@ -22,6 +25,61 @@ const AdminVideos = () => {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<any>(emptyVideo);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [fetchingMetadata, setFetchingMetadata] = useState(false);
+
+  const extractVideoId = (input: string) => {
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = input.match(regExp);
+    return (match && match[7].length === 11) ? match[7] : input;
+  };
+
+  const generateDescriptionFromTitle = (title: string) => {
+    if (!title) return "";
+    
+    // Dynamic templates based on keywords
+    const lowerTitle = title.toLowerCase();
+    
+    if (lowerTitle.includes("dsa") || lowerTitle.includes("algorithm") || lowerTitle.includes("leet") || lowerTitle.includes("gfg")) {
+      return `Master Data Structures and Algorithms with this detailed session on ${title}. We'll break down the logic, complexity analysis, and step-by-step implementation to help you ace your interviews.`;
+    }
+    
+    if (lowerTitle.includes("react") || lowerTitle.includes("next") || lowerTitle.includes("web") || lowerTitle.includes("js")) {
+      return `Upgrade your web development skills with this hands-on tutorial on ${title}. We'll explore modern best practices, code structure, and real-world application building.`;
+    }
+
+    if (lowerTitle.includes("interview") || lowerTitle.includes("placement") || lowerTitle.includes("career")) {
+      return `Prepare for your dream tech job with this deep dive into ${title}. We cover the most frequently asked questions and essential concepts to boost your confidence.`;
+    }
+
+    // Default professional template
+    return `In this video, we explore ${title} in detail. We'll cover the core fundamentals, practical examples, and everything you need to master this topic with codewithMIC.`;
+  };
+
+  const fetchYoutubeMetadata = async () => {
+    const videoId = extractVideoId(form.youtubeId);
+    if (!videoId) {
+      toast.error("Please enter a valid YouTube ID or URL");
+      return;
+    }
+
+    setFetchingMetadata(true);
+    try {
+      const data = await api(`/youtube/metadata/${videoId}`);
+      const fetchedTitle = data.title || form.title;
+      setForm({
+        ...form,
+        youtubeId: videoId,
+        title: fetchedTitle,
+        description: generateDescriptionFromTitle(fetchedTitle),
+        playlists: form.playlists, // keep existing playlists if any
+      });
+      toast.success("Video data fetched!");
+    } catch (err) {
+      toast.error("Could not fetch video data. Check the ID/URL.");
+    } finally {
+      setFetchingMetadata(false);
+    }
+  };
 
   /* ---------------- fetch ---------------- */
   const { data: videos = [], isLoading: videosLoading } = useQuery({
@@ -81,13 +139,25 @@ const AdminVideos = () => {
       title: v.title,
       youtubeId: v.youtubeId,
       description: v.description || "",
-      category: v.category || "",
+      category: v.category || "DSA",
       notesUrl: v.notesUrl || "",
       codeUrl: v.codeUrl || "",
-      playlist: v.playlist?._id || v.playlist || null,
+      playlists: v.playlists || (v.playlist ? [v.playlist._id || v.playlist] : []),
+      date: v.date ? new Date(v.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     });
     setEditingId(v._id);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const togglePlaylist = (id: string) => {
+    const current = [...(form.playlists || [])];
+    const index = current.indexOf(id);
+    if (index > -1) {
+      current.splice(index, 1);
+    } else {
+      current.push(id);
+    }
+    setForm({ ...form, playlists: current });
   };
 
   return (
@@ -121,14 +191,31 @@ const AdminVideos = () => {
 
           <div className="space-y-1">
             <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
-              YouTube ID
+              YouTube ID / Link
             </label>
-            <input
-              placeholder="e.g. lAraRRlMZEU"
-              value={form.youtubeId}
-              onChange={(e) => setForm({ ...form, youtubeId: e.target.value })}
-              className={inputClass}
-            />
+            <div className="flex gap-2">
+              <input
+                placeholder="Paste URL or ID"
+                value={form.youtubeId}
+                onChange={(e) => setForm({ ...form, youtubeId: e.target.value })}
+                className={inputClass}
+              />
+              <Button 
+                type="button"
+                variant="secondary" 
+                size="sm"
+                onClick={fetchYoutubeMetadata}
+                disabled={fetchingMetadata || !form.youtubeId}
+                className="shrink-0"
+              >
+                {fetchingMetadata ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-1" />
+                )}
+                {fetchingMetadata ? "..." : "Fetch"}
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-1">
@@ -146,36 +233,67 @@ const AdminVideos = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
                 Category
               </label>
-              <input
-                placeholder="DSA / Web"
+              <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className={inputClass}
-              />
+              >
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
-                Playlist
+                Video Date
               </label>
-              <select
-                value={form.playlist || ""}
-                onChange={(e) =>
-                  setForm({ ...form, playlist: e.target.value || null })
-                }
+              <input
+                type="date"
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
                 className={inputClass}
-              >
-                <option value="">Standalone</option>
-                {playlists.map((pl: any) => (
-                  <option key={pl._id} value={pl._id}>
-                    {pl.title}
-                  </option>
-                ))}
-              </select>
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground ml-1">
+              Add to Playlists (Select multiple)
+            </label>
+            <div className="grid grid-cols-2 gap-2 max-h-[120px] overflow-y-auto p-2 border border-border rounded-lg bg-secondary/20">
+              {playlists.map((pl: any) => (
+                <label 
+                  key={pl._id} 
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
+                    form.playlists?.includes(pl._id) 
+                      ? 'bg-primary/10 text-primary border border-primary/20' 
+                      : 'hover:bg-secondary border border-transparent'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="hidden"
+                    checked={form.playlists?.includes(pl._id)}
+                    onChange={() => togglePlaylist(pl._id)}
+                  />
+                  <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
+                    form.playlists?.includes(pl._id) ? 'bg-primary border-primary' : 'border-muted-foreground/30'
+                  }`}>
+                    {form.playlists?.includes(pl._id) && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                  </div>
+                  <span className="text-xs font-medium truncate">{pl.title}</span>
+                </label>
+              ))}
+              {playlists.length === 0 && (
+                <p className="text-[10px] text-muted-foreground italic col-span-2 text-center py-2">
+                  No playlists found. Create one first!
+                </p>
+              )}
             </div>
           </div>
 
@@ -291,7 +409,9 @@ const AdminVideos = () => {
                       {v.title}
                     </p>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-tight">
-                      {v.playlist ? "Playlist" : "Standalone"} • {v.category}
+                      {v.playlists?.length > 0 
+                        ? `${v.playlists.length} Playlists` 
+                        : v.playlist ? "1 Playlist" : "Standalone"} • {v.category}
                     </p>
                   </div>
                 </div>
