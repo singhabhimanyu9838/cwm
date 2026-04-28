@@ -1,7 +1,8 @@
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  import.meta.env.VITE_API_URL ||
-  "https://codewithmic-backend.onrender.com/api"; 
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+const API_BASE = isLocal 
+  ? "http://localhost:5000/api" 
+  : (import.meta.env.VITE_API_BASE || "https://codewithmic-backend.onrender.com/api");
 
 console.log("🌐 API Base URL:", API_BASE);
 
