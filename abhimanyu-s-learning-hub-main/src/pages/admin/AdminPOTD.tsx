@@ -102,6 +102,21 @@ const AdminPOTD = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleVideoSelect = (vid: string) => {
+    const video = videos.find((v: any) => v._id === vid);
+    if (video) {
+      setForm({
+        ...form,
+        videoId: vid,
+        title: video.title,
+        notes: video.description || "",
+      });
+      toast.info("Auto-filled title and notes from video");
+    } else {
+      setForm({ ...form, videoId: vid });
+    }
+  };
+
   /* ================= UI ================= */
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -186,7 +201,7 @@ const AdminPOTD = () => {
             </label>
             <select
               value={form.videoId}
-              onChange={(e) => setForm({ ...form, videoId: e.target.value })}
+              onChange={(e) => handleVideoSelect(e.target.value)}
               className={inputClass}
             >
               <option value="">No Video Solution</option>
