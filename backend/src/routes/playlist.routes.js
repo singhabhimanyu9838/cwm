@@ -1,6 +1,22 @@
 import express from "express";
 import Playlist from "../models/Playlist.js";
 import Video from "../models/Video.js";
+
+const normalizeThumbnail = (url, req) => {
+  if (!url) return null;
+  // If it's a relative path starting with /uploads
+  if (url.startsWith("/uploads/")) {
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    return `${baseUrl}${url}`;
+  }
+  // If it's a localhost URL from a previous upload, fix it for the current environment
+  if (url.includes("localhost:5000/uploads/")) {
+    const filename = url.split("/uploads/")[1];
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    return `${baseUrl}/uploads/${filename}`;
+  }
+  return url;
+};
 import { protect } from "../middleware/auth.middleware.js";
 import { adminOnly } from "../middleware/admin.middleware.js";
 
@@ -25,7 +41,7 @@ router.get("/", async (req, res) => {
       return {
         ...pl.toObject(),
         videoCount: count,
-        thumbnail: pl.thumbnail || (firstVideo
+        thumbnail: normalizeThumbnail(pl.thumbnail, req) || (firstVideo
           ? `https://img.youtube.com/vi/${firstVideo.youtubeId}/mqdefault.jpg`
           : null),
       };
@@ -47,6 +63,9 @@ router.get("/:id", async (req, res) => {
 
   res.json({
     ...playlist.toObject(),
+    thumbnail: normalizeThumbnail(playlist.thumbnail, req) || (videos[0] 
+      ? `https://img.youtube.com/vi/${videos[0].youtubeId}/mqdefault.jpg`
+      : null),
     videos,
   });
 });

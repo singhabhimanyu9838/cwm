@@ -38,9 +38,8 @@ router.post("/", protect, adminOnly, upload.single("image"), (req, res) => {
     return res.status(400).json({ message: "No file uploaded" });
   }
 
-  // Return the full URL that can be accessed from the frontend
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
-  const filePath = `${baseUrl}/uploads/${req.file.filename}`;
+  // Return only the relative path to be stored in the DB
+  const filePath = `/uploads/${req.file.filename}`;
   res.json({ url: filePath });
 });
 
