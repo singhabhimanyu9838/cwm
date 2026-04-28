@@ -30,10 +30,8 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow Postman / server-to-server
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
+      // allow Postman / server-to-server / development
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".onrender.com")) {
         return callback(null, true);
       }
 
@@ -67,6 +65,10 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/youtube", youtubeRoutes);
 app.use("/api/upload", uploadRoutes);
+
+app.get("/api/ping", (req, res) => {
+  res.json({ status: "alive", message: "Backend is working!" });
+});
 
 app.get("/", (req, res) => {
   res.send("API running");

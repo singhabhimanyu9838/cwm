@@ -1,10 +1,9 @@
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   import.meta.env.VITE_API_URL ||
-  "https://cwm-backend.onrender.com/api";
+  "https://codewithmic-backend.onrender.com/api"; 
 
-
-console.log("API BASE:", API_BASE);
+console.log("🌐 API Base URL:", API_BASE);
 
 export async function api(
   endpoint: string,
